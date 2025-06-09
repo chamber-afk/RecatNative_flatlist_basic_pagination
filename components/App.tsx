@@ -3,7 +3,7 @@ import React from 'react'
 import { useEffect, useState } from 'react'
 
 type ImageItem = {
-  id: string;
+  uid: number;
   imageUrl: string;
 }
 
@@ -18,12 +18,14 @@ export default function App() {
   }, [])
 
   const fetchItems = async () => {
+
+    if (loading) return;
     try {
       setLoading(true);
       const response = await fetch(`https://api.unsplash.com/photos?page=${pageNum}&per_page=10&client_id=${UNSPLASH_ACCESS_KEY}`);
       const responseJSON = await response.json();
-      const images = responseJSON.map((img: { urls: { regular: string } }, index: number) => ({
-        id: (pageNum - 1) * 16 + index + 1,
+      const images = responseJSON.map((img: { urls: { regular: string } }, index: number ) => ({
+        uid: (pageNum - 1) * 10 + index + 1,
         imageUrl: img.urls.regular
       })) as ImageItem[];
       setItems(prevItems => [...prevItems, ...images]);
@@ -33,10 +35,6 @@ export default function App() {
     } finally {
       setLoading(false);
     }
-  }
-
-  if (loading && items.length === 0) {
-    return <ActivityIndicator size="large" color="#0000ff" />
   }
 
   return (
@@ -50,7 +48,7 @@ export default function App() {
           </View>
         )}
         data={items}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => item.uid.toString()}
         renderItem={({ item }) => (
           <View style={styles.container}>
             <Image
@@ -63,11 +61,12 @@ export default function App() {
         onEndReached={fetchItems}
         onEndReachedThreshold={1}
         ListFooterComponent={() => (
-          loading ? (
+          loading && (
             <View style={styles.footerContainer}>
               <ActivityIndicator size="large" color="#0000ff" />
+              <Text style={styles.loadingText}>Loading more images...</Text>
             </View>
-          ) : null
+          )
         )}
       />
     </SafeAreaView>
@@ -76,7 +75,7 @@ export default function App() {
 
 const styles = StyleSheet.create({
   mainBackground: {
-    backgroundColor: 'pink',
+    backgroundColor: '#FFDCDC',
   },
   headingCard: {
     backgroundColor: '#EDEEF7',
@@ -114,4 +113,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  loadingText: {
+    marginTop: 10,
+  }
 })
